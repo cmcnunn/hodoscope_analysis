@@ -2,11 +2,11 @@
 Hodoscope Data Analysis and Visualization
 -----------------------------------------
 This script processes ROOT files from a hodoscope detector and provides:
-    ✔ Event-by-event ADC histograms
-    ✔ 2D ADC histograms for individual events
-    ✔ Full-detector averaged heatmaps
-    ✔ Coincidence heatmaps
-    ✔ Channel-wise ADC distributions
+    Event-by-event ADC histograms
+    2D ADC histograms for individual events
+    Full-detector averaged heatmaps
+    Coincidence heatmaps
+    Channel-wise ADC distributions
 
 Features:
 - Optional channel remapping
@@ -590,9 +590,7 @@ def main():
     '''
     plot_channel_adc_distribution(events=good_good, save_fig=True, remap=True)
     '''
-    for event_id in good_good:  # Plot first 5 good events
-        if event_id % 100 == 0:
-            print(f"[INFO] Plotting event {event_id}...")
+    for event_id in good_good: #Plot individual events
         plot_event_adc_hist(event_id, save_fig=True, remap=True)
         plot_event_adc_2dhist(event_id, save_fig=True, remap=True)
     '''
@@ -601,4 +599,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
