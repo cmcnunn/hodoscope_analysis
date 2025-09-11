@@ -454,7 +454,7 @@ def plot_channel_adc_distribution(events = n_entries, board1=BOARD1, board2=BOAR
 # ==============================
 import csv
 
-PEAKS_CSV = os.path.join(SAVE_DIR_EVENTS, "event_peaks.csv")
+HITS_CSV = os.path.join(SAVE_DIR_EVENTS, "event_hits.csv")
 
 def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energyHG", board2="FERS_Board1_energyHG",
                           threshold=THRESHOLD, remap=False, save_csv=True):
@@ -472,13 +472,13 @@ def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energ
             energies_2 = do_map(energies_2,s_fers_vert_mapping)
 
         all_channels = energies_1 + energies_2
-        peaks = [i for i, val in enumerate(all_channels) if val > threshold]
-        multiplicity = len(peaks)
+        hits = [i for i, val in enumerate(all_channels) if val > threshold]
+        multiplicity = len(hits)
 
         # compute mean ADC of all channels above threshold (if any)
-        mean_adc = np.mean([val for val in all_channels if val > threshold]) if peaks else 0
+        mean_adc = np.mean([val for val in all_channels if val > threshold]) if hits else 0
 
-        results.append([event_id, multiplicity, peaks, mean_adc])
+        results.append([event_id, multiplicity, hits, mean_adc])
         multiplicities.append(multiplicity)
 
     if event is not None:
@@ -493,17 +493,17 @@ def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energ
         raise ValueError("Either 'event' or 'eventrange' must be provided.")
 
     if save_csv:
-        with open(PEAKS_CSV, "w", newline="") as f:
+        with open(HITS_CSV, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["event_id", "num_peaks", "channels_with_peaks", "mean_adc"])
+            writer.writerow(["event_id", "num_hits", "channels_with_hits", "mean_adc"])
             writer.writerows(results)
-        print(f"[INFO] Peak detection results saved to {PEAKS_CSV}")
+        print(f"[INFO] Peak detection results saved to {HITS_CSV}")
 
     mean_val = np.mean(multiplicities)
     # Plot multiplicity histogram
     plt.figure(figsize=(8, 5))
     plt.hist(multiplicities, bins=range(0, max(multiplicities)+2), alpha=0.7)
-    plt.xlabel("Number of Peaks (Channels Above Threshold)")
+    plt.xlabel("Number of Hits (Channels Above Threshold)")
     plt.ylabel("Number of Events")
     plt.title(f"Peak Multiplicity Distribution (Threshold = {threshold})")
     plt.text(0.95, 0.95, f"Mean: {mean_val:.2f}",
@@ -522,12 +522,12 @@ def find_good_events(csv_file, max_hits=2):
     with open(csv_file, 'r', newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            num_peaks = int(row['num_peaks'])
-            if num_peaks <= max_hits:
+            num_hits = int(row['num_hits'])
+            if num_hits <= max_hits:
                 good_events.append(int(row['event_id']))
                 adc_values.append(float(row['mean_adc']))
 
-    print(f"[INFO] Found {len(good_events)} good events with ≤ {max_hits} peaks.")
+    print(f"[INFO] Found {len(good_events)} good events with ≤ {max_hits} hits.")
     if adc_values:
         mean_adc = sum(adc_values) / len(adc_values)
         print(f"[INFO] Mean ADC of good events: {mean_adc:.2f}")
@@ -570,10 +570,10 @@ def main():
     good, vetoed = getUpstreamVeto(n_entries)
     print(f"[INFO] Veto complete. Good events: {len(good)}, Vetoed events: {len(vetoed)}")
 
-    # Step 2: Find good events by peaks
+    # Step 2: Find good events by hits
     print("[INFO] Step 2: Apply peak check")
     detect_hits_per_event(eventrange=n_entries, remap=True, save_csv=True)
-    good_hits = find_good_events(PEAKS_CSV, max_hits=2)
+    good_hits = find_good_events(HITS_CSV, max_hits=2)
 
     # Step 3: Get coincidence between veto and peak selected events
     print("[INFO] Step 3: Finding coincidence between veto and hit selected events...")
@@ -599,5 +599,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
