@@ -37,7 +37,7 @@ bad_events = []
 
 #Recommended Mapping::
 #BOARD1 = SNAKE MAPPING + FERS MAPPING
-#BOARD2 = SNAKE MAPPING + FERS MAPPING VERTICLE FLIP
+#BOARD2 = SNAKE MAPPING + FERS MAPPING VERTICAL FLIP
 
 #SNAKE MAPPING + FERS MAPPING 
 s_fers_mapping = [
@@ -461,25 +461,28 @@ def main():
     good_good = list(set(good) & set(good_hits))
     print(f"[INFO] Events passing both veto and hit criteria: {len(good)}")
 
-    # Step 4: Generate coincidence hitmap
-    '''
+    # Step 4: Generate coincidence hitmaps
+    
     print("[INFO] Step 4: Generating coincidence hitmaps...")
     hodoscopeHitmap(good, save_fig=True, remap=True, title='2D_coincidence_hitmap_veto')
     hodoscopeHitmap(good_hits, save_fig=True, remap=True, title='2D_coincidence_hitmap_peakdetection')
     hodoscopeHitmap(good_good, save_fig=True, remap=True, title='2D_coincidence_hitmap_bothcuts')
     print("[INFO] Coincidence hitmap complete.")
-    '''
+     # Step 5: Generate channel distributions
+    print("[INFO] Step 5: Generating channel adc distributions")
     plot_channel_adc_distribution(events=good_good, save_fig=True, remap=True)
-    '''
+     # Step 6: Generate coincidence hitmaps
+    print("[INFO] Step 6: Plot evnt ADC 1D and 2D Histograms")
     for event_id in good_good: #Plot individual events
         plot_event_adc_hist(event_id, save_fig=True, remap=True)
         plot_event_adc_2dhist(event_id, save_fig=True, remap=True)
-    '''
+
     elapsed_time = time.time() - start_time
     print(f"[INFO] Analysis complete in {elapsed_time:.2f} seconds.")
 
 if __name__ == "__main__":
     main()
+
 
 
 
