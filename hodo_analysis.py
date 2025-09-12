@@ -1,20 +1,3 @@
-"""
-Hodoscope Data Analysis and Visualization
------------------------------------------
-This script processes ROOT files from a hodoscope detector and provides:
-    Event-by-event ADC histograms
-    2D ADC histograms for individual events
-    Full-detector averaged heatmaps
-    Coincidence heatmaps
-    Channel-wise ADC distributions
-
-Features:
-- Optional channel remapping
-- Threshold-based event filtering
-- Automatic plot saving with organized directories
-- Configurable display vs save behavior
-"""
-
 import ROOT
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,10 +7,9 @@ import os
 # GLOBAL CONFIGURATION
 # ==============================
 FILE_PATH = "/home/colin_regex/CaloXData/run1326_250820010716_TimingDAQ.root"
-BOARD1 = "FERS_Board0_energyHG"
-BOARD2 = "FERS_Board1_energyHG"
-BOARD3 = "DRS_Board7_Group1_Channel6_amp"
-
+BOARD1 = "FERS_Board0_energyHG" #X-axis 
+BOARD2 = "FERS_Board1_energyHG" #Y-axis
+BOARD3 = "DRS_Board7_Group1_Channel6_amp" #VETO Measuments 
 THRESHOLD = 4500  # Minimum ADC value for event selection
 
 # Directories for saving plots
@@ -50,68 +32,12 @@ n_entries = tree.GetEntries()
 bad_events = []
 
 # ==============================
-# CHANNEL MAPPING CONFIGURATION
+# CHANNEL MAPPING CONFIGURATIONS
 # ==============================
 
-#SNAKE MAPPING
-s_mapping = [
-     0, 1, 2, 3, 4, 5, 6, 7,
-    15,14,13,12,11,10, 9, 8,
-    16,17,18,19,20,21,22,23,
-    31,30,29,28,27,26,25,24,
-    32,33,34,35,36,37,38,39,
-    47,46,45,44,43,42,41,40,
-    48,49,50,51,52,53,54,55,
-    63,62,61,60,59,58,57,56
-]
-
-#SNAKE MAPPING 180
-s_180_mapping = [
-    63,62,61,60,59,58,57,56,
-    48,49,50,51,52,53,54,55,
-    47,46,45,44,43,42,41,40,
-    32,33,34,35,36,37,38,39,
-    31,30,29,28,27,26,25,24,
-    16,17,18,19,20,21,22,23,
-    15,14,13,12,11,10, 9, 8,
-     0, 1, 2, 3, 4, 5, 6, 7 
-]
-
-#SNAKE MAPPING HORI FLIP
-s_hori_mapping = [
-     7, 6, 5, 4, 3, 2, 1, 0,
-     8, 9,10,11,12,13,14,15,
-    23,22,21,20,19,18,17,16,
-    24,25,26,27,28,29,30,31,
-    39,38,37,36,35,34,33,32,
-    40,41,42,43,44,45,46,47,
-    55,54,53,52,51,50,49,48,
-    56,57,58,59,60,61,62,63 
-]
-
-#SNAKE MAPPING VERT FLIP 
-s_vert_mapping = [
-    48,49,50,51,52,53,54,55,
-    63,62,61,60,59,58,57,56,
-    32,33,34,35,36,37,38,39,
-    47,46,45,44,43,42,41,40,
-    16,17,18,19,20,21,22,23,
-    31,30,29,28,27,26,25,24,
-     0, 1, 2, 3, 4, 5, 6, 7,
-    15,14,13,12,11,10, 9, 8 
-]
-
-#FERS_MAPPING
-fers_mapping = [
-     0, 8,16,24,32,40,48,56,
-     4,12,20,28,36,44,52,60,
-     2,10,18,26,34,42,50,58,
-     6,14,22,30,38,46,54,62,
-     1, 9,17,25,33,41,49,57,
-     5,13,21,29,37,45,53,61,
-     3,11,19,27,35,43,51,59,
-     7,15,23,31,39,47,55,63,
-]
+#Recommended Mapping::
+#BOARD1 = SNAKE MAPPING + FERS MAPPING
+#BOARD2 = SNAKE MAPPING + FERS MAPPING VERTICLE FLIP
 
 #SNAKE MAPPING + FERS MAPPING 
 s_fers_mapping = [
@@ -125,18 +51,6 @@ s_fers_mapping = [
     63,55,47,39,31,23,15, 7
 ]
 
-#SNAKE + FERS +180 flip
-s_fers_180_mapping = [
-    63,55,47,39,31,23,15, 7,
-     3,11,19,27,35,43,51,59,
-    61,53,45,37,29,21,13, 5,
-     1, 9,17,25,33,41,49,57,
-    62,54,46,38,30,22,14, 6,
-     2,10,18,26,34,42,50,58,
-    60,52,44,36,28,20,12, 4,
-     0, 8,16,24,32,40,48,56
-]
-
 #SNAKE + FERS + VERT FLIP
 s_fers_vert_mapping = [
     56,48,40,32,24,16, 8, 0,
@@ -148,42 +62,9 @@ s_fers_vert_mapping = [
     59,51,43,35,27,19,11, 3,
      7,15,23,31,39,47,55,63
 ]
-
-#SNAKE + FERS + HORI FLIP
-s_fers_mapping = [
-     7,15,23,31,39,47,55,63,
-     3,11,19,27,35,43,51,59,
-     5,13,21,29,37,45,53,61,
-     1, 9,17,25,33,41,49,57,
-     6,14,22,30,38,46,54,62,
-     2,10,18,26,34,42,50,58,
-     4,12,20,28,36,44,52,60,
-     0, 8,16,24,32,40,48,56
-]
-#EVERNOTE MAPPING
-A5202_map = [
-     3, 1, 2, 0, 7, 5, 6, 4,
-    10, 8,11, 9,14,12,15,13,
-    19,17,18,16,23,21,22,20,
-    26,24,27,25,30,28,31,29,
-    35,33,34,32,39,37,38,36,
-    42,40,43,41,46,44,47,45,
-    51,49,50,48,55,53,54,52,
-    58,56,59,57,62,60,63,61
-]
-A5202_snake_map = [
-     3, 1, 2, 0, 7, 5, 6, 4,
-    13,15,12,14, 9,11, 8,10,
-    19,17,18,16,23,21,22,20,
-    29,31,28,30,25,27,24,26,
-    35,33,34,32,39,37,38,36,
-    45,47,44,46,41,43,40,42,
-    51,49,50,48,55,53,54,52,
-    61,63,60,62,57,59,56,58
-]
-
 ######CHANGE HERE######
-mapping = s_fers_mapping
+mapping1 = s_fers_mapping
+mapping2 = s_fers_vert_mapping
 #######################
 def do_map(data, smapping=mapping):
     """Apply channel remapping to a list of 64 ADC values."""
@@ -599,6 +480,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
