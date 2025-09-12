@@ -10,6 +10,7 @@ This is the repository of Hodoscope analysis and plotting code for HG-Dream
 ## Requirements
 
 - Python 3.7+
+- ROOT
 - `matplotlib`
 - `numpy`
 - `os`
@@ -20,6 +21,12 @@ Applies a channel remapping to a list of 64 ADC values based on the specified ma
 
 ---
 
+### getUpstreamVeto(events, veto_board, veto_threshold)
+Applies an upstream veto cut to events.  
+- Returns lists of good and vetoed events.  
+- Reports number of surviving beam hits.
+
+---
 
 ### detect_hits_per_event(event=None, eventrange=None, board1, board2, threshold, remap=False, save_csv=True)
 Detects hits (channels above threshold) for events and saves results.  
@@ -36,12 +43,18 @@ Reads hit detection results and selects “good” events with ≤ `max_hits`.
 
 ---
 
-### getUpstreamVeto(events, veto_board, veto_threshold)
-Applies an upstream veto cut to events.  
-- Returns lists of good and vetoed events.  
-- Reports number of surviving beam hits.
+### analyze_event(event_id, board1=BOARD1, board2=BOARD2, threshold=THRESHOLD, remap=False)
+Reads event ADC, remaps (if needed) and records hits if over a threshold
 
 ---
+
+### plot_event_2Dhist(hit_x, hit_y, save_fig=False, event_id=None)
+Takes in output from analyze_event and plots a single event
+
+---
+
+### plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events=False)
+Compiles analyze_event to plot full run hit data. Optionally plots single events. 
 
 ### main()
 Main pipeline for hodoscope analysis. Runs:  
