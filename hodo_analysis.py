@@ -238,15 +238,16 @@ def plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events
 def main():
     print("[INFO] Starting analysis...")
     # Step 1: Detect hits and save to CSV
-    #detect_hits_per_event(eventrange=n_entries, remap=True)
+    detect_hits_per_event(eventrange=n_entries, remap=True)
     # Step 2: Find good hit events (≤ 2 hits)
     good_events = find_good_hit_events(HITS_CSV, max_hits=4)
     # Step 3: Apply upstream veto
-    vetted_events, vetoed_events = getUpstreamVeto(good_events, veto_threshold=600)
+    vetted_good_events, vetoed_good_events = getUpstreamVeto(good_events, veto_threshold=600)
+    vetted_events, vetoed_events = getUpstreamVeto(range(n_entries), veto_threshold=600)
     # Step 4: Plot cumulative 2D histogram of good events
-    plot_allevents_2Dhist(events=vetted_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Good Events")
-    plot_allevents_2Dhist(events=vetoed_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events")
-    print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_events) / n_entries))
+    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Good Events")
+    plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events")
+    print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0))
     print("[INFO] Analysis complete.")
     
 if __name__ == "__main__":
