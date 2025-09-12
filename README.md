@@ -20,44 +20,6 @@ Applies a channel remapping to a list of 64 ADC values based on the specified ma
 
 ---
 
-### plot_event_adc_hist(event_id, board1, board2, save_fig=False, remap=False)
-Plots ADC values for two boards for a single event as overlapping bar charts.  
-- Skips low-energy events.  
-- Can remap channels.  
-- Optionally saves plots to disk.
-
----
-
-### plot_event_adc_2dhist(event_id, board1, board2, save_fig=False, remap=False)
-Generates a 2D ADC histogram (board1 vs board2) for one event.  
-- Uses average ADC counts.  
-- Supports channel remapping and saving.
-
----
-
-### hodoscopeHeatmap(event_list=None, board1, board2, save_fig=False, remap=False, title="2D_ADC_Histogram")
-Creates a **64x64 averaged heatmap** of ADC counts across many events.  
-- Optionally restricts to a subset of events.  
-- Applies threshold filtering and channel remapping.  
-- Reports mean ADC value and number of valid events.
-
----
-
-### hodoscopeHitmap(event_list=None, board1, board2, save_fig=False, remap=False, title="2D_Coincidence_Hitmap")
-Builds a **coincidence map** of channels above threshold between two boards.  
-- Coincidences are accumulated across events.  
-- Supports remapping and subset analysis.  
-- Reports mean coincidences per cell.
-
----
-
-### plot_channel_adc_distribution(events, board1, board2, save_fig=False, remap=False)
-Plots ADC value distributions for each channel across all events.  
-- Produces histograms (log scale) of ADC counts per channel.  
-- Compares both boards side by side.  
-- Can save each channel’s distribution as a figure.
-
----
 
 ### detect_hits_per_event(event=None, eventrange=None, board1, board2, threshold, remap=False, save_csv=True)
 Detects hits (channels above threshold) for events and saves results.  
@@ -83,7 +45,6 @@ Applies an upstream veto cut to events.
 
 ### main()
 Main pipeline for hodoscope analysis. Runs:  
-1. Upstream veto selection  
-2. Hit detection and filtering  
-3. Good event intersection (veto + hit cuts)  
+1. Hit detection and filtering  
+2. Upstream veto selection 
 4. Coincidence hitmap generation  
