@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import csv
+import time
 
 # ==============================
 # GLOBAL CONFIGURATION
@@ -236,6 +237,7 @@ def plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events
 # ==============================
 
 def main():
+    start_time = time.time()
     print("[INFO] Starting analysis...")
     # Step 1: Detect hits and save to CSV
     detect_hits_per_event(eventrange=n_entries, remap=True)
@@ -249,6 +251,8 @@ def main():
     plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events")
     print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0))
     print("[INFO] Analysis complete.")
+    end_time = time.time()
+    print(f"[INFO] Total analysis time: {end_time - start_time:.2f} seconds.")
     
 if __name__ == "__main__":
     main()

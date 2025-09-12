@@ -9,11 +9,12 @@ This is the repository of Hodoscope analysis and plotting code for HG-Dream
 - Analyse using upstream VETO 
 ## Requirements
 
-- Python 3.7+
-- ROOT
+- `Python 3.7+`
+- `ROOT`
 - `matplotlib`
 - `numpy`
 - `os`
+- `time`
 ## Function Descriptions
 
 ### do_map(data, apply_mapping=mapping)
