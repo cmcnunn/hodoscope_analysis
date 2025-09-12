@@ -15,7 +15,7 @@ This is the repository of Hodoscope analysis and plotting code for HG-Dream
 - `os`
 ## Function Descriptions
 
-### do_map(data, smapping=mapping)
+### do_map(data, apply_mapping=mapping)
 Applies a channel remapping to a list of 64 ADC values based on the specified mapping scheme.
 
 ---
