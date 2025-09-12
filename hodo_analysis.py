@@ -66,7 +66,7 @@ s_fers_vert_mapping = [
 mapping1 = s_fers_mapping
 mapping2 = s_fers_vert_mapping
 #######################
-def do_map(data, smapping=mapping):
+def do_map(data, apply_mapping=mapping):
     """Apply channel remapping to a list of 64 ADC values."""
     if len(data) != len(smapping):
         raise ValueError("Data length and mapping length must match.")
@@ -94,8 +94,8 @@ def plot_event_adc_hist(event_id, board1=BOARD1, board2=BOARD2, save_fig=False, 
         return
 
     if remap:
-        energies_1 = do_map(energies_1,s_fers_mapping)
-        energies_2 = do_map(energies_2,s_fers_vert_mapping)
+        energies_1 = do_map(energies_1,mapping1)
+        energies_2 = do_map(energies_2,mapping2)
         event_label = f"{event_id}_remapped"
     else:
         event_label = str(event_id)
@@ -137,8 +137,8 @@ def plot_event_adc_2dhist(event_id, board1=BOARD1, board2=BOARD2, save_fig=False
         return
 
     if remap:
-        energies_1 = do_map(energies_1, s_fers_mapping)
-        energies_2 = do_map(energies_2, s_fers_vert_mapping)
+        energies_1 = do_map(energies_1,mapping1)
+        energies_2 = do_map(energies_2,mapping2)
         event_label = f"{event_id}_remapped"
     else:
         event_label = str(event_id)
@@ -185,8 +185,8 @@ def hodoscopeHeatmap(event_list = None, board1=BOARD1, board2=BOARD2, save_fig=F
             continue
 
         if remap:
-            energies_1 = do_map(energies_1,s_fers_mapping)
-            energies_2 = do_map(energies_2,s_fers_vert_mapping)
+            energies_1 = do_map(energies_1,mapping1)
+            energies_2 = do_map(energies_2,mapping2)
 
         Z += (np.array(energies_2)[:, None] + np.array(energies_1)[None, :])
         valid_events += 1
@@ -254,8 +254,8 @@ def hodoscopeHitmap(event_list=None, board1=BOARD1, board2=BOARD2, save_fig=Fals
             continue
 
         if remap:
-            energies_1 = do_map(energies_1,s_fers_mapping)
-            energies_2 = do_map(energies_2,s_fers_vert_mapping)
+            energies_1 = do_map(energies_1,mapping1)
+            energies_2 = do_map(energies_2,mapping2)
 
         # Find channels above threshold
         good_x = [i for i, val in enumerate(energies_1) if val >= THRESHOLD]
@@ -300,8 +300,8 @@ def plot_channel_adc_distribution(events = n_entries, board1=BOARD1, board2=BOAR
             continue
 
         if remap:
-            energies_1 = do_map(energies_1,s_fers_mapping)
-            energies_2 = do_map(energies_2,s_fers_vert_mapping)
+            energies_1 = do_map(energies_1,mapping1)
+            energies_2 = do_map(energies_2,mapping2)
 
         for i in range(64):
             all_energies_1[i].append(energies_1[i])
@@ -349,8 +349,8 @@ def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energ
         energies_2 = list(getattr(tree, board2))
 
         if remap:
-            energies_1 = do_map(energies_1,s_fers_mapping)
-            energies_2 = do_map(energies_2,s_fers_vert_mapping)
+            energies_1 = do_map(energies_1,mapping1)
+            energies_2 = do_map(energies_2,mapping2)
 
         all_channels = energies_1 + energies_2
         hits = [i for i, val in enumerate(all_channels) if val > threshold]
@@ -480,6 +480,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
