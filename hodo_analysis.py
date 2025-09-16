@@ -12,7 +12,8 @@ FILE_PATH = "/home/colin_regex/CaloXData/run1326_250820010716_TimingDAQ.root"
 BOARD1 = "FERS_Board0_energyHG" #X-axis 
 BOARD2 = "FERS_Board1_energyHG" #Y-axis
 BOARD3 = "DRS_Board7_Group1_Channel6_amp" #VETO Measuments 
-THRESHOLD = 4500  # Minimum ADC value for event selection
+# [100,1000,1500,4000,8000]
+THRESHOLD = 5500  # Minimum ADC value for event selection
 # Directories for saving plots
 SAVE_DIR_EVENTS = "event_adc_plots"
 SAVE_DIR_FULL = "full_displays"
@@ -98,6 +99,17 @@ def getUpstreamVeto(events, veto_board = BOARD3, veto_threshold = 600):
 
     return good, vetoed
 
+def getVetomean(events, veto_board = BOARD3):
+    veto_energies = []
+    for event_id in events:
+        tree.GetEntry(event_id)
+        veto_energy = getattr(tree,veto_board)
+        veto_energies.append(veto_energy)
+
+    mean_veto = np.mean(veto_energies)
+    std_veto = np.std(veto_energies)
+    print(f"[INFO] Veto Mean: {mean_veto:.2f}, Veto Std Dev: {std_veto:.2f}")
+    return mean_veto, std_veto
 #!! Make sure to only run detect_hits_per_event once to avoid overwriting the CSV file !!
 
 def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energyHG", board2="FERS_Board1_energyHG",
@@ -232,24 +244,75 @@ def plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events
         plt.show()
     plt.close()
 
+def get_efficiency_plot(hit_range, save_fig=False, veto_thresh=600):
+    n_hits = []
+    efficiencies = []
+    vetted_events, _ = getUpstreamVeto(range(n_entries), veto_threshold=veto_thresh)
+
+    for max_hits in range(hit_range):
+        good_events = find_good_hit_events(HITS_CSV, max_hits=max_hits)
+        vetted_good_events, _ = getUpstreamVeto(good_events, veto_threshold=veto_thresh)
+        efficiency = 100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0
+        n_hits.append(max_hits)
+        efficiencies.append(efficiency)
+        print(f"[INFO] Efficiency for max {max_hits} hits: {efficiency:.2f}%")
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(n_hits, efficiencies, marker='o')
+    plt.xlabel("Maximum Number of Hits Allowed")
+    plt.ylabel("Efficiency (%)")
+    plt.title(f"Efficiency vs. Maximum Number of Hits Threshold = {THRESHOLD}, Veto = {veto_thresh:.0f}")
+    plt.grid(True)
+    if save_fig:
+        plt.savefig(os.path.join(SAVE_DIR_FULL, "efficiency_vs_max_hits.png"))
+        print(f"[INFO] Efficiency plot saved as {SAVE_DIR_FULL}/efficiency_vs_max_hits.png.")
+    else:
+        plt.show()
+    plt.close()
+
+def get_efficiency_per_threshold(thresholds, veto_thresh=600, hits_max=2):
+    efficiencies = []
+    vetted_events, _ = getUpstreamVeto(range(n_entries), veto_threshold=veto_thresh)
+
+    for thresh in thresholds:
+        detect_hits_per_event(eventrange=n_entries, threshold=thresh, remap=True, save_csv=True)
+        good_events = find_good_hit_events(HITS_CSV, max_hits=hits_max)
+        vetted_good_events, _ = getUpstreamVeto(good_events, veto_threshold=veto_thresh)
+        efficiency = 100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0
+        efficiencies.append(efficiency)
+        print(f"[INFO] Efficiency for threshold {thresh}: {efficiency:.2f}%")
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(thresholds, efficiencies, marker='o')
+    plt.xlabel("ADC Threshold")
+    plt.ylabel("Efficiency (%)")
+    plt.title(f"Efficiency vs. ADC Threshold, Veto = {veto_thresh:.0f}")
+    plt.grid(True)
+    plt.savefig(os.path.join(SAVE_DIR_FULL, "efficiency_vs_adc_threshold.png"))
+    print(f"[INFO] Efficiency vs. ADC threshold plot saved as {SAVE_DIR_FULL}/efficiency_vs_adc_threshold.png.")
+    plt.close()
 # ==============================
 # MAIN ANALYSIS WORKFLOW
 # ==============================
-
 def main():
     start_time = time.time()
     print("[INFO] Starting analysis...")
+    veto_mean,_ = getVetomean(range(n_entries), veto_board=BOARD3)
     # Step 1: Detect hits and save to CSV
     detect_hits_per_event(eventrange=n_entries, remap=True)
     # Step 2: Find good hit events (≤ 2 hits)
-    good_events = find_good_hit_events(HITS_CSV, max_hits=4)
+    good_events = find_good_hit_events(HITS_CSV, max_hits=2)
     # Step 3: Apply upstream veto
-    vetted_good_events, vetoed_good_events = getUpstreamVeto(good_events, veto_threshold=600)
-    vetted_events, vetoed_events = getUpstreamVeto(range(n_entries), veto_threshold=600)
+    vetted_good_events, vetoed_good_events = getUpstreamVeto(good_events, veto_threshold=veto_mean)
+    vetted_events, _ = getUpstreamVeto(range(n_entries), veto_threshold=veto_mean)
     # Step 4: Plot cumulative 2D histogram of good events
-    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Good Events")
-    plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events")
+    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Good Events hits ≤ 2")
+    plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events hits ≤ 2")
     print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0))
+    # Step 5: Generate efficiency plots
+    # get_efficiency_plot(hit_range=10, save_fig=True, veto_thresh=veto_mean)
+    thresholds = np.linspace(1000, 8000, 15)
+    # get_efficiency_per_threshold(thresholds, veto_thresh=veto_mean, hits_max=2)
     print("[INFO] Analysis complete.")
     end_time = time.time()
     print(f"[INFO] Total analysis time: {end_time - start_time:.2f} seconds.")
