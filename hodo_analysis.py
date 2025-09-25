@@ -119,16 +119,6 @@ def plotVetoDistribution(events, veto_board = BOARD3, bins=100, range=(0, 3000),
         plt.show()
     plt.close()
 
-def getVetomedian(events, veto_board = BOARD3):
-    veto_energies = []
-    for event_id in events:
-        tree.GetEntry(event_id)
-        veto_energy = getattr(tree,veto_board)
-        veto_energies.append(veto_energy)
-
-    median_veto = np.median(veto_energies)
-    print(f"[INFO] Veto Mean: {median_veto:.2f}")
-    return median_veto
 #!! Make sure to only run detect_hits_per_event once to avoid overwriting the CSV file !!
 
 def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energyHG", board2="FERS_Board1_energyHG",
