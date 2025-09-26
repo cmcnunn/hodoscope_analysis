@@ -121,7 +121,7 @@ def plotVetoDistribution(events, veto_board = BOARD3, bins=100, range=(0, 3000),
 
 #!! Make sure to only run detect_hits_per_event once to avoid overwriting the CSV file !!
 
-def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energyHG", board2="FERS_Board1_energyHG",
+def detect_hits_per_event(event=None, eventrange=None,run_number=None, board1="FERS_Board0_energyHG", board2="FERS_Board1_energyHG",
                           threshold=THRESHOLD, remap=False, save_csv=True):
     results = []
     multiplicities = []
@@ -158,7 +158,7 @@ def detect_hits_per_event(event=None, eventrange=None, board1="FERS_Board0_energ
             writer = csv.writer(f)
             writer.writerow(["event_id", "num_hits", "channels_with_hits", "mean_adc"])
             writer.writerows(results)
-        print(f"[INFO] Hit detection results saved to {HITS_CSV}")
+        print(f"[INFO] Hit detection results saved to {HITS_CSV+run_number}")
 
     mean_val = np.mean(multiplicities)
     # Plot multiplicity histogram
@@ -216,7 +216,7 @@ def analyze_event(event_id, board1=BOARD1, board2=BOARD2, threshold=THRESHOLD, r
 # EVENT Plotting FUNCTIONS
 # ==============================
 
-def plot_event_2Dhist(hit_x, hit_y, save_fig=False, event_id=None):
+def plot_event_2dhist(hit_x, hit_y, save_fig=False, event_id=None):
     plt.figure(figsize=(8, 6))
     plt.hist2d(hit_x, hit_y, bins=[64, 64], range=[[0, 64], [0, 64]], cmap='viridis')
     plt.colorbar(label='Counts')
@@ -230,6 +230,36 @@ def plot_event_2Dhist(hit_x, hit_y, save_fig=False, event_id=None):
         plt.show()
     plt.close()
 
+def plot_event_adc_distribution(event_id, board1=BOARD1, board2=BOARD2, remap=False, save_fig=False):
+    tree.GetEntry(event_id)
+    energies_1 = list(getattr(tree, board1))
+    energies_2 = list(getattr(tree, board2))
+
+    if remap:
+        energies_1 = do_map(energies_1,mapping1)
+        energies_2 = do_map(energies_2,mapping2)
+
+    plt.figure(figsize=(10, 6))
+    plt.subplot(2, 1, 1)
+    plt.bar(range(64), energies_1, color='orange', alpha=0.7)
+    plt.xlabel('Board 1 Channels (x-axis)')
+    plt.ylabel('ADC Value')
+    plt.title(f'Event {event_id} - Board 1 ADC Distribution')
+
+    plt.subplot(2, 1, 2)
+    plt.bar(range(64), energies_2, color='blue', alpha=0.7)
+    plt.xlabel('Board 2 Channels (y-axis)')
+    plt.ylabel('ADC Value')
+    plt.title(f'Event {event_id} - Board 2 ADC Distribution')
+
+    plt.tight_layout()
+    if save_fig:
+        plt.savefig(os.path.join(SAVE_DIR_EVENTS, f"event_{event_id}_adc_distribution.png"))
+        print(f"[INFO] Event {event_id} ADC distribution saved as {SAVE_DIR_EVENTS}/event_{event_id}_adc_distribution.png.")
+    else:
+        plt.show()
+    plt.close()
+
 def plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events=False, title="Cumulative 2D Histogram of All Events"):
     Z = np.zeros((64, 64))  # Global variable to hold the 2D histogram data
     for i in events:
@@ -238,7 +268,8 @@ def plot_allevents_2Dhist(events = n_entries, save_fig=False, plot_single_events
             for y in hits_y:
                 Z[y, x] += 1  # Note: y corresponds to rows, x to columns
         if plot_single_events:
-            plot_event_2Dhist(hits_x, hits_y, save_fig=save_fig, event_id=i)
+            save = save_fig
+            plot_event_2Dhist(hits_x, hits_y, save_fig=save, event_id=i)
     plt.figure(figsize=(8, 6))
     plt.imshow(Z, origin='lower', cmap='viridis', extent=[0, 64, 0, 64])
     plt.colorbar(label='Counts')
@@ -328,23 +359,20 @@ def get_efficiency_per_veto(veto_thresholds, hits_max=2, threshold=THRESHOLD):
 def main():
     start_time = time.time()
     print("[INFO] Starting analysis...")
-    # Step 1: Detect hits and save to CSV
-    detect_hits_per_event(eventrange=n_entries, remap=True)
+    # Step 1: Detect hits and save to CSV (only run this once)
+    detect_hits_per_event(eventrange=n_entries, remap=True, run_number="_1326", save_csv=True)
     # Step 2: Find good hit events (≤ 2 hits)
     good_events = find_good_hit_events(HITS_CSV, max_hits=2)
     # Step 3: Apply upstream veto
     vetted_good_events, vetoed_good_events = getUpstreamVeto(good_events, veto_threshold=13.5)
     vetted_events, _ = getUpstreamVeto(range(n_entries), veto_threshold=13.5)
     # Step 4: Plot cumulative 2D histogram of good events
-    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Good Events hits ≤ 2")
-    plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events hits ≤ 2")
+    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Approved Events hits ≤ 2 Hits")
+    plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events hits ≤ 2 Hits")
     print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0))
-    # Step 5: Generate efficiency plots
-    thresholds = np.linspace(1000, 8000, 15)
-    veto_thresholds = np.linspace(10, 3000, 15)
-    #get_efficiency_plot(hit_range=10, save_fig=True, veto_thresh=13.5)
-    get_efficiency_per_threshold(thresholds, veto_thresh=13, hits_max=2)
-    get_efficiency_per_veto(veto_thresholds, hits_max=2, threshold=THRESHOLD)
+    for i in vetted_good_events[:20]:  # Plot first 5 vetted good events
+        plot_event_adc_distribution(i, remap=True, save_fig=True)
+    plot_event_adc_distribution(1314, remap=True, save_fig=True)
     print("[INFO] Analysis complete.")
     end_time = time.time()
     print(f"[INFO] Total analysis time: {end_time - start_time:.2f} seconds.")
