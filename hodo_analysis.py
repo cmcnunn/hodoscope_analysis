@@ -367,15 +367,15 @@ def main():
     vetted_good_events, vetoed_good_events = getUpstreamVeto(good_events, veto_threshold=13.5)
     vetted_events, _ = getUpstreamVeto(range(n_entries), veto_threshold=13.5)
     # Step 4: Plot cumulative 2D histogram of good events
-    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Approved Events hits ≤ 2 Hits")
+    plot_allevents_2Dhist(events=vetted_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Events hits ≤ 2 Hits")
     plot_allevents_2Dhist(events=vetoed_good_events, save_fig=True, plot_single_events=False, title="Cumulative 2D Histogram of Vetoed Events hits ≤ 2 Hits")
     print("Efficiency after veto: {:.2f}%".format(100 * len(vetted_good_events) / len(vetted_events) if vetted_events else 0))
     for i in vetted_good_events[:20]:  # Plot first 5 vetted good events
         plot_event_adc_distribution(i, remap=True, save_fig=True)
-    plot_event_adc_distribution(1314, remap=True, save_fig=True)
     print("[INFO] Analysis complete.")
     end_time = time.time()
     print(f"[INFO] Total analysis time: {end_time - start_time:.2f} seconds.")
     
 if __name__ == "__main__":
+
     main()
