@@ -496,4 +496,5 @@ def main():
     print(f"[INFO] Total analysis time: {end_time - start_time:.2f} seconds.")
     
 if __name__ == "__main__":
+
     main()

@@ -15,6 +15,10 @@ This is the repository of Hodoscope analysis and plotting code for HG-Dream
 - `numpy`
 - `os`
 - `time`
+
+## How to Run 
+Type the following line:
+`Python3 hodo_analysis.py`
 ## Function Descriptions
 
 ### do_map(data, apply_mapping=mapping)
