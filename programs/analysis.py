@@ -118,6 +118,13 @@ def detect_hits(entry,map=False, board1=BOARD1, board2=BOARD2, threshold=THRESHO
 # ==============================
 # RUN ANALYSIS FUNCTIONS
 # ==============================
+def check_run():
+    a = input(f"[WARNING] {HITS_CSV} already exists. Do you want to re-analyze the run and overwrite the existing data? (y/n): ")
+    if a.lower() == 'y':
+        print(f"[INFO] Overwriting existing data in {HITS_CSV}.")
+        analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
+    else:
+        print(f"[INFO] Skipping analysis for this run.")
 
 def get_runs(json_file):
     with open(json_file, "r") as f:
@@ -208,6 +215,7 @@ def plot_run(csv_file, title=f"Run {run_number} Hit Map"):
     plt.ylabel("Board 2 Channels")
     plt.title(title)
     plt.savefig(SAVE_DIR_FULL+"/Hit_Map.png", dpi=300)
+    plt.close()
 
 def profile2d(x, y, z, xedges=None, yedges=None, bins=(64, 64),
               xr=None, yr=None, min_count=1):
@@ -307,6 +315,7 @@ def veto_profile2d(events, tree, veto_board="FERS_Board2_energyHG",
     plt.title(title)
     plt.tight_layout()
     plt.savefig(os.path.join(SAVE_DIR_FULL, f"{title.replace(' ', '_')}.png"), dpi=300)
+    plt.close()
     return mean, count, xedges, yedges, stderr
 
 def plot_mean_adc_histogram(csv_file):
@@ -326,9 +335,10 @@ def plot_mean_adc_histogram(csv_file):
     plt.ylabel("Counts")
     plt.title(f"Normalized Histogram of Mean ADC Values for Run {run_number}")
     plt.savefig(os.path.join(SAVE_DIR_EVENTS, f"Norm_Mean_ADC_Histogram_Run_{run_number}.png"), dpi=300)
+    plt.close()
 
 def main():
-    global FILE_PATH, file, tree, n_entries, RUN_DIR, SAVE_DIR_EVENTS, SAVE_DIR_FULL, SAVE_DIR_CHANNEL, HITS_CSV
+    global FILE_PATH, file, tree, n_entries,run_number, RUN_DIR, SAVE_DIR_EVENTS, SAVE_DIR_FULL, SAVE_DIR_CHANNEL, HITS_CSV
     run_info = get_runs("run_list.json")
     for file_path, run_number in run_info:
         # ==============================
@@ -349,12 +359,15 @@ def main():
         os.makedirs(SAVE_DIR_FULL, exist_ok=True)
         start_time = time.time()
         print(f"[INFO] Starting analysis for run {run_number} with threshold {THRESHOLD}, events = {n_entries} remap={True}.")
-        analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
+        if os.path.isfile(HITS_CSV):
+            check_run()
+        else:
+            analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
         plot_run(HITS_CSV)
         plot_mean_adc_histogram(HITS_CSV)
-        #veto_profile2d(range(n_entries), tree, veto_board=BOARD3, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative Veto Amplitude (mean)")
-        #veto_profile2d(range(n_entries), tree, veto_board=MCP1, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP1 Amplitude (mean)")
-        #veto_profile2d(range(n_entries), tree, veto_board=MCP2, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP2 Amplitude (mean)")
+        veto_profile2d(range(n_entries), tree, veto_board=BOARD3, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative Veto Amplitude (mean)")
+        veto_profile2d(range(n_entries), tree, veto_board=MCP1, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP1 Amplitude (mean)")
+        veto_profile2d(range(n_entries), tree, veto_board=MCP2, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP2 Amplitude (mean)")
         end_time = time.time()
         print(f"[INFO] Analysis complete for run {run_number}.")
         print(f"[INFO] Run time: {end_time - start_time:.2f} seconds.")
