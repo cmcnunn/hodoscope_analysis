@@ -129,15 +129,25 @@ def check_run():
 def get_runs(json_file):
     with open(json_file, "r") as f:
         runs = json.load(f)
-
+    run = input(f"Enter run number to analyze (or 'all' for all runs): ")
     run_info = []
-    for run_number, info in runs.items():
-        file_path = info.get("file")
-        if file_path:
-            run_info.append((file_path, run_number))
+    if run == 'all':
+        for run_number, info in runs.items():
+            file_path = info.get("file")
+            if file_path:
+                run_info.append((file_path, run_number))
         else:
             print(f"Warning: Run {run_number} missing file path")
-
+    elif run != 'all':
+        info = runs.get(run)
+        if info:
+            file_path = info.get("file")
+            if file_path:
+                run_info.append((file_path, run))
+            else:
+                print(f"Error: Run {run} missing file path")
+        else:
+            print(f"Error: Run {run} not found in {json_file}")
     return run_info 
 
 def analyze_run(events = n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6):
