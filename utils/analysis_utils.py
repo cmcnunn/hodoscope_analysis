@@ -10,11 +10,11 @@ import time
 # ==============================
 # GLOBAL CONFIGURATION
 # ==============================
-BOARD1 = "FERS_Board0_energyHG" #X-axis 
-BOARD2 = "FERS_Board1_energyHG" #Y-axis
-BOARD3 = "DRS_Board7_Group1_Channel6" #VETO Measuments 
-MCP1 = "DRS_Board0_Group3_Channel6" #MCP1 Measuments
-MCP2 = "DRS_Board0_Group3_Channel7" #MCP2 Measuments
+BOARD1 = "" #X-axis 
+BOARD2 = "" #Y-axis
+BOARD3 = "" #VETO Measuments 
+MCP1 = "" #MCP1 Measuments
+MCP2 = "" #MCP2 Measuments
 THRESHOLD = 5500  # Minimum ADC value for event selection
 
 n_entries = 0
@@ -28,64 +28,15 @@ SAVE_DIR_FULL = ""
 SAVE_DIR_CHANNEL = ""
 HITS_CSV = ""
 
-# ==============================
-# CHANNEL MAPPING CONFIGURATIONS
-# ==============================
+mapping1 = []
+mapping2 = []
 
-#SNAKE MAPPING + FERS MAPPING 
-s_fers_mapping = [
-     0, 8,16,24,32,40,48,56,
-    60,52,44,36,28,20,12, 4,
-     2,10,18,26,34,42,50,58,
-    62,54,46,38,30,22,14, 6,
-     1, 9,17,25,33,41,49,57,
-    61,53,45,37,29,21,13, 5,
-     3,11,19,27,35,43,51,59,
-    63,55,47,39,31,23,15, 7
-]
-
-#SNAKE + FERS + VERT FLIP
-s_fers_flip_mapping = [
-     7,15,23,31,39,47,55,63,
-    59,51,43,35,27,19,11, 3,
-     5,13,21,29,37,45,53,61,
-    57,49,41,33,25,17, 9, 1,
-     6,14,22,30,38,46,54,62,
-    58,50,42,34,26,18,10, 2,
-     4,12,20,28,36,44,52,60,
-    56,48,40,32,24,16, 8, 0
-]
-
-test_mapping = [
-    63, 55, 47, 39, 31, 23, 15, 7,
-    3, 11, 19, 27, 35, 43, 51, 59,
-    61, 53, 45, 37, 29, 21, 13, 5,
-    1, 9, 17, 25, 33, 41, 49, 57,
-    62, 54, 46, 38, 30, 22, 14, 6,
-    2, 10, 18, 26, 34, 42, 50, 58,
-    60, 52, 44, 36, 28, 20, 12, 4,
-    0, 8, 16, 24, 32, 40, 48, 56
-]
-######CHANGE HERE######
-mapping1 = s_fers_mapping
-mapping2 = test_mapping
-#######################
-
-
-# ==============================
-# CHANNEL REMAPPING FUNCTION
-# ==============================
-
-def do_map(data, apply_mapping=s_fers_mapping):
+def do_map(data, apply_mapping):
     """Apply channel remapping to a list of 64 ADC values."""
     if len(data) != len(apply_mapping):
         raise ValueError("Data length and mapping length must match.")
     remapped_data = [data[i] for i in apply_mapping]
     return remapped_data
-
-# ==============================
-# EVENT ANALYSIS FUNCTIONS
-# ==============================
 
 def getupstreamVeto(entry, veto_board=BOARD3, veto_threshold=13.6):
     """Check the veto for one event"""
@@ -115,40 +66,6 @@ def detect_hits(entry,map=False, board1=BOARD1, board2=BOARD2, threshold=THRESHO
     hits2 = [i for i, val in enumerate(energies_1) if val > threshold]
     return hits1, hits2
 
-# ==============================
-# RUN ANALYSIS FUNCTIONS
-# ==============================
-def check_run():
-    a = input(f"[WARNING] {HITS_CSV} already exists. Do you want to re-analyze the run and overwrite the existing data? (y/n): ")
-    if a.lower() == 'y':
-        print(f"[INFO] Overwriting existing data in {HITS_CSV}.")
-        analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
-    else:
-        print(f"[INFO] Skipping analysis for this run.")
-
-def get_runs(json_file):
-    with open(json_file, "r") as f:
-        runs = json.load(f)
-    run = input(f"Enter run number to analyze (or 'all' for all runs): ")
-    run_info = []
-    if run == 'all':
-        for run_number, info in runs.items():
-            file_path = info.get("file")
-            if file_path:
-                run_info.append((file_path, run_number))
-        else:
-            print(f"Warning: Run {run_number} missing file path")
-    elif run != 'all':
-        info = runs.get(run)
-        if info:
-            file_path = info.get("file")
-            if file_path:
-                run_info.append((file_path, run))
-            else:
-                print(f"Error: Run {run} missing file path")
-        else:
-            print(f"Error: Run {run} not found in {json_file}")
-    return run_info 
 
 def analyze_run(events = n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6):
     """Analyze a full run of events."""
@@ -180,10 +97,18 @@ def analyze_run(events = n_entries, max_hits=2, remap=True, board1=BOARD1, board
                     continue
             else:
                 continue
-
+    
     print(f"[INFO] Total events processed: {len(events)}")
     print(f"[INFO] Events passing veto: {len(hodoscope_events)}")
     print(f"[INFO] Events with hits detected: {len(hit_detection_events)}")
+
+def check_run():
+    a = input(f"[WARNING] {HITS_CSV} already exists. Do you want to re-analyze the run and overwrite the existing data? (y/n): ")
+    if a.lower() == 'y':
+        print(f"[INFO] Overwriting existing data in {HITS_CSV}.")
+        analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
+    else:
+        print(f"[INFO] Skipping analysis for this run.")
 
 def plot_run(csv_file, title=f"Run {run_number} Hit Map"):
     """
@@ -224,7 +149,7 @@ def plot_run(csv_file, title=f"Run {run_number} Hit Map"):
     plt.xlabel("Board 1 Channels")
     plt.ylabel("Board 2 Channels")
     plt.title(title)
-    plt.savefig(SAVE_DIR_FULL+"/Hit_Map.png", dpi=300)
+    plt.savefig(os.path.join(SAVE_DIR_FULL, f"{title.replace(' ', '_')}.png"), dpi=300)
     plt.close()
 
 def profile2d(x, y, z, xedges=None, yedges=None, bins=(64, 64),
@@ -328,7 +253,7 @@ def veto_profile2d(events, tree, veto_board="FERS_Board2_energyHG",
     plt.close()
     return mean, count, xedges, yedges, stderr
 
-def plot_mean_adc_histogram(csv_file):
+def plot_mean_adc_histogram(csv_file, title=f"Run {run_number} Mean ADC Histogram"):
     mean_adc =[]
     with open(csv_file, "r") as f: 
         reader = csv.DictReader(f)
@@ -343,44 +268,7 @@ def plot_mean_adc_histogram(csv_file):
     plt.hist(mean_adc, bins=50, color='blue', alpha=0.7, density=True)
     plt.xlabel("Mean ADC Value")
     plt.ylabel("Counts")
-    plt.title(f"Normalized Histogram of Mean ADC Values for Run {run_number}")
-    plt.savefig(os.path.join(SAVE_DIR_EVENTS, f"Norm_Mean_ADC_Histogram_Run_{run_number}.png"), dpi=300)
+    plt.title(title)
+    plt.savefig(os.path.join(SAVE_DIR_EVENTS, f"{title.replace(' ', '_')}.png"), dpi=300)
     plt.close()
 
-def main():
-    global FILE_PATH, file, tree, n_entries,run_number, RUN_DIR, SAVE_DIR_EVENTS, SAVE_DIR_FULL, SAVE_DIR_CHANNEL, HITS_CSV
-    run_info = get_runs("run_list.json")
-    for file_path, run_number in run_info:
-        # ==============================
-        # LOAD ROOT FILE AND TREE
-        # ==============================
-        FILE_PATH = file_path
-        file = ROOT.TFile.Open(FILE_PATH)
-        tree = file.Get("EventTree")
-        n_entries = tree.GetEntries()
-        # ==============================
-        # Save Directories
-        # ==============================
-        RUN_DIR = f"run_{run_number}"
-        SAVE_DIR_EVENTS = RUN_DIR+"/event_adc_plots"
-        SAVE_DIR_FULL = RUN_DIR+"/full_displays"
-        HITS_CSV = os.path.join(SAVE_DIR_EVENTS, run_number+"_"+"event_hits.csv")
-        os.makedirs(SAVE_DIR_EVENTS, exist_ok=True)
-        os.makedirs(SAVE_DIR_FULL, exist_ok=True)
-        start_time = time.time()
-        print(f"[INFO] Starting analysis for run {run_number} with threshold {THRESHOLD}, events = {n_entries} remap={True}.")
-        if os.path.isfile(HITS_CSV):
-            check_run()
-        else:
-            analyze_run(events=n_entries, max_hits=2, remap=True, board1=BOARD1, board2=BOARD2, board3=BOARD3, threshold=THRESHOLD, veto_threshold=13.6)
-        plot_run(HITS_CSV)
-        plot_mean_adc_histogram(HITS_CSV)
-        veto_profile2d(range(n_entries), tree, veto_board=BOARD3, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative Veto Amplitude (mean)")
-        veto_profile2d(range(n_entries), tree, veto_board=MCP1, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP1 Amplitude (mean)")
-        veto_profile2d(range(n_entries), tree, veto_board=MCP2, bins=(64, 64), xr=(0, 64), yr=(0, 64), min_count=2, title=f"Run {run_number} Cumulative MCP2 Amplitude (mean)")
-        end_time = time.time()
-        print(f"[INFO] Analysis complete for run {run_number}.")
-        print(f"[INFO] Run time: {end_time - start_time:.2f} seconds.")
-
-if __name__ == "__main__":
-    main()
