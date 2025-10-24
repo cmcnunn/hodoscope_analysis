@@ -91,7 +91,8 @@ def detect_hits(x_adc, y_adc):
 
 def multirun_analysis(run_list, title = "MultiRunAnalysis"):
     # Load run file list 
-    os.makedirs(title+"_output", exist_ok=True)
+    OUTPUT_DIR = title+"_output"
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open("run_list.json", "r") as f:
         run_files = json.load(f)
     # Loop over runs
@@ -123,24 +124,24 @@ def multirun_analysis(run_list, title = "MultiRunAnalysis"):
                     
         file.Close()
 
-    return Z
+    return Z, OUTPUT_DIR
 
-def create_2Dhist(Z, title):
+def create_2Dhist(Z, title, OUTPUT_DIR):
     plt.figure(figsize=(8, 6))
     plt.imshow(Z, origin="lower", cmap="viridis")
     plt.colorbar(label="Counts")
     plt.xlabel("Board 1 Channels")
     plt.ylabel("Board 2 Channels")
     plt.title(title)
-    plt.savefig(f"{title.replace(' ', '_')}.png", dpi=300)
+    plt.savefig(f"{OUTPUT_DIR}+{title.replace(' ', '_')}.png", dpi=300)
     plt.close()
 
 def main():
     start = time.time()
     run_list = ["1510", "1526", "1527"]  # Example run numbers
     title = "MultiRunAnalysis_1510_1526_1527"
-    Z = multirun_analysis(run_list, title)
-    create_2Dhist(Z, title)
+    Z, OUTPUT_DIR = multirun_analysis(run_list, title)
+    create_2Dhist(Z, title, OUTPUT_DIR)
     end = time.time()
     full_time = end - start
     print(f"Analysis completed in {full_time/60:.2f} minutes.")
